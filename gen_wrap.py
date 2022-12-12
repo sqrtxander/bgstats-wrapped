@@ -187,9 +187,12 @@ def main():
 
         else:
             args.output = 'wrappedAllTime.png'
-    
+
     with open(args.path, 'r', encoding='UTF-8') as f:
         data = json.load(f)
+
+    if not os.path.exists(os.path.join(os.path.dirname(__file__), 'pickles/')):
+        os.mkdir(os.path.join(os.path.dirname(__file__), 'pickles/'))
 
     games = load_games(data)
     players = load_players(data)
