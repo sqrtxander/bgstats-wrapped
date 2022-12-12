@@ -1,6 +1,6 @@
 # bgstats-wrapped
 
-A data visualisation for bgstats data
+A data visualisation for bgstats data. Idea by [Talita James](https://www.github.com/TalitaJames)
 
 ## How to generate your own visual 
 
