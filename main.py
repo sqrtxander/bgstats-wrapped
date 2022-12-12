@@ -13,6 +13,7 @@ import collections
 
 import time
 
+
 class Game:
     def __init__(self, bgg_id):
         self.bgg_id = bgg_id
@@ -141,11 +142,13 @@ def generate_image(games, players, mechanics):
 
     img.save('wrapped.png')
 
+
 def main():
     games = load_games()
     players = load_players()
     mechanics = get_mechanics(games)
     generate_image(games, players, mechanics)
+
 
 TEXT_COLOUR = (255, 255, 255)
 BACKGROUND_COLOUR = (20, 20, 20)
@@ -153,7 +156,7 @@ BACKGROUND_COLOUR = (20, 20, 20)
 try:
     path = sys.argv[1]
 except IndexError:
-    path = os.path.join(os.path.dirname(__file__), 'BGStatsExport2022-12-11.json')
+    path = os.path.join(os.path.dirname(__file__), 'BGStatsExport.json')
 with open(path, 'r', encoding='UTF-8') as f:
     DATA = json.load(f)
 
