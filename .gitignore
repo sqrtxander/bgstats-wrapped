@@ -5,4 +5,4 @@ BGStatsExport*.json
 wrapped*.png
 
 # pickled data
-pickles/
+pickles*/
