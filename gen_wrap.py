@@ -17,8 +17,15 @@ import argparse
 
 
 class Game:
-    def __init__(self, bgg_id):
+    def __init__(self, bgg_id, name=None):
         self.bgg_id = bgg_id
+        if bgg_id == 0:
+            self.image = 'images/none_game.png'
+            self.mechanics = []
+            self.name = name
+            self.plays = collections.defaultdict(int)
+            return
+
         r = requests.get(
             f'https://boardgamegeek.com/xmlapi2/thing?id={bgg_id}')
         game_dict = xmltodict.parse(r.text)['items']['item']
@@ -47,7 +54,10 @@ def load_games(data):
             return pickle.load(f)
     games = {}
     for game in data['games']:
-        games[game['id']] = Game(game['bggId'])
+        if game['bggId'] == 0:
+            games[game['id']] = Game(0, game['bggName'])
+        else:
+            games[game['id']] = Game(game['bggId'])
         print(f'Loaded {game["bggName"]}')
 
         time.sleep(2)
@@ -55,6 +65,7 @@ def load_games(data):
     for play in data['plays']:
         year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year
         games[play['gameRefId']].plays[year] += 1
+        games[play['gameRefId']].plays[None] += 1
 
     with open('pickles/games.pickle', 'wb') as f:
         pickle.dump(games, f)
@@ -76,6 +87,7 @@ def load_players(data):
             year = datetime.strptime(
                 play['playDate'], '%Y-%m-%d %H:%M:%S').year
             players[player['playerRefId']].plays[year] += 1
+            players[player['playerRefId']].plays[None] += 1
 
     with open('pickles/players.pickle', 'wb') as f:
         pickle.dump(players, f)
@@ -90,6 +102,7 @@ def get_mechanics(games, data):
         year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year
         for mechanic in game.mechanics:
             mechanics[year][mechanic] += 1
+            mechanics[None][mechanic] += 1
     return mechanics
 
 
@@ -100,6 +113,9 @@ def truncate_name(name, max_length=15):
 
 
 def generate_image(games, players, mechanics, year, output_path):
+    background_colour = (20, 20, 20)
+    text_colour = (255, 255, 255)
+
     games_plays = [game for game in games.values() if game.plays[year]]
     games_plays.sort(key=lambda game: game.plays[year], reverse=True)
 
@@ -124,7 +140,7 @@ def generate_image(games, players, mechanics, year, output_path):
 
     gameimage = gameimage.resize((544, 544))
 
-    wrapped = Image.new('RGB', (1080, 1920), color=BACKGROUND_COLOUR)
+    wrapped = Image.new('RGB', (1080, 1920), color=background_colour)
     wrapped.paste(backdropimage, (100, 80), backdropimage)
     wrapped.paste(gameimage, (268, 264))
 
@@ -134,26 +150,26 @@ def generate_image(games, players, mechanics, year, output_path):
     font_year = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 112)
     draw = ImageDraw.Draw(wrapped)
 
-    draw.text((20, 20), f'/{year}', TEXT_COLOUR, font=font_year)
+    draw.text((20, 20), f'/{year}', text_colour, font=font_year)
 
-    draw.text((100, 1000), "Top Players", TEXT_COLOUR, font=font_heading)
+    draw.text((100, 1000), "Top Players", text_colour, font=font_heading)
 
     for i, player in list(enumerate(players_plays))[:min(5, len(players_plays))]:
         draw.text((100,  1080+i * 45),
-                  f'{i+1} {truncate_name(player.name)}', TEXT_COLOUR, font=font)
+                  f'{i+1} {truncate_name(player.name)}', text_colour, font=font)
 
-    draw.text((560, 1000), "Top Games", TEXT_COLOUR, font=font_heading)
+    draw.text((560, 1000), "Top Games", text_colour, font=font_heading)
     for i, game in list(enumerate(games_plays))[:min(5, len(games_plays))]:
         draw.text((560, 1080+i*45),
-                  f'{i+1} {truncate_name(game.name)}', TEXT_COLOUR, font=font)
+                  f'{i+1} {truncate_name(game.name)}', text_colour, font=font)
 
-    draw.text((100, 1440), "Total Plays", TEXT_COLOUR, font=font_heading)
-    draw.text((100, 1520), f'{total_plays}', TEXT_COLOUR, font=font_big)
+    draw.text((100, 1440), "Total Plays", text_colour, font=font_heading)
+    draw.text((100, 1520), f'{total_plays}', text_colour, font=font_big)
 
     if mechanics_plays:
-        draw.text((560, 1440), "Top Mechanic", TEXT_COLOUR, font=font_heading)
+        draw.text((560, 1440), "Top Mechanic", text_colour, font=font_heading)
         draw.text((560, 1520), mechanics_plays[0].replace(
-            " ", "\n"), TEXT_COLOUR, font=font_big)
+            " ", "\n"), text_colour, font=font_big)
 
     wrapped.save(output_path)
 
@@ -169,7 +185,7 @@ def main():
     if args.new and os.path.exists('pickles/'):
         os.removedirs('pickles/')
     if not args.year:
-        args.year = datetime.now().year
+        args.year = None
     if not args.path:
         args.path = os.path.join(os.path.dirname(
             __file__), 'BGStatsExport.json')
@@ -184,10 +200,6 @@ def main():
     mechanics = get_mechanics(games, data)
 
     generate_image(games, players, mechanics, args.year, args.output)
-
-
-TEXT_COLOUR = (255, 255, 255)
-BACKGROUND_COLOUR = (20, 20, 20)
 
 
 if __name__ == '__main__':
