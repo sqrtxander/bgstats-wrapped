@@ -49,7 +49,7 @@ def load_games(data):
             return pickle.load(f)
     games = {}
     for game in data['games']:
-        games[game['id']] = Game(game['bggId', game['name']])
+        games[game['id']] = Game(game['bggId'], game['name'])
         print(f'Loaded {game["name"]}')
 
         time.sleep(2)
