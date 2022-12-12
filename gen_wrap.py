@@ -158,10 +158,14 @@ def generate_image(games, players, mechanics, year, output_path):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--new', action='store_true')
     parser.add_argument('-y', '--year', type=int)
     parser.add_argument('-p', '--path', type=str)
     parser.add_argument('-o', '--output', type=str)
     args = parser.parse_args()
+
+    if args.new and os.path.exists('pickles/'):
+        os.removedirs('pickles/')
     if not args.year:
         args.year = datetime.now().year
     if not args.path:
