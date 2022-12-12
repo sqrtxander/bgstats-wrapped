@@ -1,5 +1,4 @@
 import os
-import sys
 
 import json
 import requests
@@ -132,8 +131,11 @@ def generate_image(games, players, mechanics, year, output_path):
     font = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 36)
     font_heading = ImageFont.truetype('fonts/Courier Prime.ttf', 36)
     font_big = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 68)
-
+    font_year = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 112)
     draw = ImageDraw.Draw(wrapped)
+
+    draw.text((20, 20), f'/{year}', TEXT_COLOUR, font=font_year)
+
     draw.text((100, 1000), "Top Players", TEXT_COLOUR, font=font_heading)
 
     for i, player in list(enumerate(players_plays))[:min(5, len(players_plays))]:
