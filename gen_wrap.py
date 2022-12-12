@@ -19,11 +19,12 @@ import argparse
 class Game:
     def __init__(self, bgg_id, name):
         self.bgg_id = bgg_id
+        self.name = name
+        self.plays = collections.defaultdict(int)
+
         if bgg_id == 0:
             self.image = 'images/none_game.png'
             self.mechanics = []
-            self.name = name
-            self.plays = collections.defaultdict(int)
             return
 
         r = requests.get(
@@ -33,14 +34,13 @@ class Game:
         self.mechanics = [link['@value'] for link in game_dict['link']
                           if link['@type'] == 'boardgamemechanic']
 
-        self.name = name
-        self.plays = collections.defaultdict(int)
 
 class Player:
     def __init__(self, id_, name):
         self.id = id_
         self.name = name
         self.plays = collections.defaultdict(int)
+        self.wins = collections.defaultdict(int)
 
 
 def load_games(data):
@@ -70,10 +70,11 @@ def load_players(data):
     if os.path.exists('pickles/players.pickle'):
         with open('pickles/players.pickle', 'rb') as f:
             return pickle.load(f)
+    count = len(data['players'])
     players = {}
-    for player in data['players']:
+    for i, player in enumerate(data['players']):
         players[player['id']] = Player(player['id'], player['name'])
-        print(f'Loaded {player["name"]}')
+        print(f'Loaded {player["name"]} {i}/{count}')
 
     for play in data['plays']:
         for player in play['playerScores']:
@@ -81,6 +82,9 @@ def load_players(data):
                 play['playDate'], '%Y-%m-%d %H:%M:%S').year
             players[player['playerRefId']].plays[year] += 1
             players[player['playerRefId']].plays[None] += 1
+            if player['winner']:
+                players[player['playerRefId']].wins[year] += 1
+                players[player['playerRefId']].wins[None] += 1
 
     with open('pickles/players.pickle', 'wb') as f:
         pickle.dump(players, f)
