@@ -14,6 +14,8 @@ import collections
 import time
 from datetime import datetime
 
+import argparse
+
 
 class Game:
     def __init__(self, bgg_id):
@@ -40,19 +42,20 @@ class Player:
         self.plays = collections.defaultdict(int)
 
 
-def load_games():
+def load_games(data):
     if os.path.exists('pickles/games.pickle'):
         with open('pickles/games.pickle', 'rb') as f:
             return pickle.load(f)
     games = {}
-    for game in DATA['games']:
+    for game in data['games']:
         games[game['id']] = Game(game['bggId'])
         print(f'Loaded {game["bggName"]}')
 
         time.sleep(2)
 
-    for play in DATA['plays']:
-        games[play['gameRefId']].plays[YEAR] += 1
+    for play in data['plays']:
+        year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year
+        games[play['gameRefId']].plays[year] += 1
 
     with open('pickles/games.pickle', 'wb') as f:
         pickle.dump(games, f)
@@ -60,18 +63,20 @@ def load_games():
     return games
 
 
-def load_players():
+def load_players(data):
     if os.path.exists('pickles/players.pickle'):
         with open('pickles/players.pickle', 'rb') as f:
             return pickle.load(f)
     players = {}
-    for player in DATA['players']:
+    for player in data['players']:
         players[player['id']] = Player(player['id'], player['name'])
         print(f'Loaded {player["name"]}')
 
-    for play in DATA['plays']:
+    for play in data['plays']:
         for player in play['playerScores']:
-            players[player['playerRefId']].plays[YEAR] += 1
+            year = datetime.strptime(
+                play['playDate'], '%Y-%m-%d %H:%M:%S').year
+            players[player['playerRefId']].plays[year] += 1
 
     with open('pickles/players.pickle', 'wb') as f:
         pickle.dump(players, f)
@@ -79,14 +84,13 @@ def load_players():
     return players
 
 
-def get_mechanics(games):
-    mechanics = collections.defaultdict(int)
-    for play in DATA['plays']:
+def get_mechanics(games, data):
+    mechanics = collections.defaultdict(lambda: collections.defaultdict(int))
+    for play in data['plays']:
         game = games[play['gameRefId']]
-        if datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year != YEAR:
-            continue
+        year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year
         for mechanic in game.mechanics:
-            mechanics[mechanic] += 1
+            mechanics[year][mechanic] += 1
     return mechanics
 
 
@@ -96,19 +100,19 @@ def truncate_name(name, max_length=15):
     return name
 
 
-def generate_image(games, players, mechanics):
-    games_plays = [game for game in games.values() if game.plays[YEAR]]
-    games_plays.sort(key=lambda game: game.plays[YEAR], reverse=True)
+def generate_image(games, players, mechanics, year, output_path):
+    games_plays = [game for game in games.values() if game.plays[year]]
+    games_plays.sort(key=lambda game: game.plays[year], reverse=True)
 
     players_plays = [player for player in players.values()
-                     if player.plays[YEAR]]
-    players_plays.sort(key=lambda player: player.plays[YEAR], reverse=True)
+                     if player.plays[year]]
+    players_plays.sort(key=lambda player: player.plays[year], reverse=True)
 
-    mechanics_plays = list(mechanics.keys())
+    mechanics_plays = list(mechanics[year])
     mechanics_plays.sort(
-        key=lambda mechanic: mechanics[mechanic], reverse=True)
+        key=lambda mechanic: mechanics[year][mechanic], reverse=True)
 
-    total_plays = sum(game.plays[YEAR] for game in games.values())
+    total_plays = sum(game.plays[year] for game in games.values())
 
     backdropimage = Image.open('images/backdrop.png')
 
@@ -149,36 +153,35 @@ def generate_image(games, players, mechanics):
         draw.text((560, 1520), mechanics_plays[0].replace(
             " ", "\n"), TEXT_COLOUR, font=font_big)
 
-    wrapped.save(f'wrapped{YEAR}.png')
+    wrapped.save(output_path)
 
 
 def main():
-    games = load_games()
-    players = load_players()
-    mechanics = get_mechanics(games)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-y', '--year', type=int)
+    parser.add_argument('-p', '--path', type=str)
+    parser.add_argument('-o', '--output', type=str)
+    args = parser.parse_args()
+    if not args.year:
+        args.year = datetime.now().year
+    if not args.path:
+        args.path = os.path.join(os.path.dirname(
+            __file__), 'BGStatsExport.json')
+    if not args.output:
+        args.output = f'wrapped{args.year}.png'
 
-    generate_image(games, players, mechanics)
+    with open(args.path, 'r', encoding='UTF-8') as f:
+        data = json.load(f)
+
+    games = load_games(data)
+    players = load_players(data)
+    mechanics = get_mechanics(games, data)
+
+    generate_image(games, players, mechanics, args.year, args.output)
 
 
 TEXT_COLOUR = (255, 255, 255)
 BACKGROUND_COLOUR = (20, 20, 20)
-
-try:
-    YEAR = int(sys.argv[1])
-except ValueError:
-    print('First argument must be a year')
-    sys.exit(1)
-except IndexError:
-    YEAR = datetime.now().year
-
-try:
-    path = sys.argv[2]
-except IndexError:
-    path = os.path.join(os.path.dirname(__file__), 'BGStatsExport.json')
-
-
-with open(path, 'r', encoding='UTF-8') as f:
-    DATA = json.load(f)
 
 
 if __name__ == '__main__':
