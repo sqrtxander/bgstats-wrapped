@@ -2,7 +2,7 @@
 BGStatsExport*.json
 
 # final image
-wrapped.png
+wrapped*.png
 
 # pickled data
 pickles/
