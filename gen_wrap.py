@@ -17,7 +17,7 @@ import argparse
 
 
 class Game:
-    def __init__(self, bgg_id, name=None):
+    def __init__(self, bgg_id, name):
         self.bgg_id = bgg_id
         if bgg_id == 0:
             self.image = 'images/none_game.png'
@@ -32,11 +32,6 @@ class Game:
         self.image = game_dict['image']
         self.mechanics = [link['@value'] for link in game_dict['link']
                           if link['@type'] == 'boardgamemechanic']
-
-        try:
-            self.name = game_dict['name'][0]['@value']
-        except KeyError:
-            self.name = game_dict['name']['@value']
 
         self.plays = collections.defaultdict(int)
 
@@ -54,11 +49,8 @@ def load_games(data):
             return pickle.load(f)
     games = {}
     for game in data['games']:
-        if game['bggId'] == 0:
-            games[game['id']] = Game(0, game['name'])
-        else:
-            games[game['id']] = Game(game['bggId'])
-        print(f'Loaded {game["bggName"]}')
+        games[game['id']] = Game(game['bggId', game['name']])
+        print(f'Loaded {game["name"]}')
 
         time.sleep(2)
 
