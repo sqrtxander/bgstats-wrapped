@@ -31,7 +31,7 @@ use this flag if you have recently updated the data file otherwise it will conti
 
 ```-year <year>```
 
-the year for the data you want to generate the wrapped from, default is the current year
+the year for the data you want to generate the wrapped from. Leave out for all time.
 
 ```-p <path>```
 
