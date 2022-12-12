@@ -33,8 +33,8 @@ class Game:
         self.mechanics = [link['@value'] for link in game_dict['link']
                           if link['@type'] == 'boardgamemechanic']
 
+        self.name = name
         self.plays = collections.defaultdict(int)
-
 
 class Player:
     def __init__(self, id_, name):
@@ -47,10 +47,11 @@ def load_games(data):
     if os.path.exists('pickles/games.pickle'):
         with open('pickles/games.pickle', 'rb') as f:
             return pickle.load(f)
+    count = len(data['games'])
     games = {}
-    for game in data['games']:
+    for i, game in enumerate(data['games'], start=1):
         games[game['id']] = Game(game['bggId'], game['name'])
-        print(f'Loaded {game["name"]}')
+        print(f'Loaded {game["name"]} {i}/{count}')
 
         time.sleep(2)
 
