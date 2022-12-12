@@ -12,8 +12,8 @@ then run:
 
 Linux: 
 
-```python3 main.py <path to bgstats json data>```
+```python3 main.py <year> <bgstats data path>```
 
 Windows:
 
-```python main.py <path to bgstats json data>```
+```python main.py <year> <bgstats data path>```
