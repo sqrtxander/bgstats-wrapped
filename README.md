@@ -8,15 +8,17 @@ install the requirements with
 
 ```pip install -r requirements.txt```
 
+Make sure you have a copy of the json data supplied from bgstats
+
 then run: 
 
 Linux: 
 
-```python3 main.py```
+```python3 gen_wrap.py```
 
 Windows:
 
-```python main.py```
+```python gen_wrap.py```
 
 ## Optional arguments
 ```-n```
@@ -41,5 +43,5 @@ The path to your bgstats json file, default is ./BGStatsExport.json
 
 ```-output <path>```
 
-the path the wrapped image will be output to, default is ./wrapped\<year\>
+the path the wrapped image will be output to, default is ./wrapped\<year\>.png
 
