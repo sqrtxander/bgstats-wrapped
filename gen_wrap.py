@@ -55,7 +55,7 @@ def load_games(data):
     games = {}
     for game in data['games']:
         if game['bggId'] == 0:
-            games[game['id']] = Game(0, game['bggName'])
+            games[game['id']] = Game(0, game['name'])
         else:
             games[game['id']] = Game(game['bggId'])
         print(f'Loaded {game["bggName"]}')
@@ -150,7 +150,9 @@ def generate_image(games, players, mechanics, year, output_path):
     font_year = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 112)
     draw = ImageDraw.Draw(wrapped)
 
-    draw.text((20, 20), f'/{year}', text_colour, font=font_year)
+    draw.text(
+        (20, 20), f'/{"ALL TIME" if year is None else year}',
+        text_colour, font=font_year)
 
     draw.text((100, 1000), "Top Players", text_colour, font=font_heading)
 
@@ -184,14 +186,16 @@ def main():
 
     if args.new and os.path.exists('pickles/'):
         os.removedirs('pickles/')
-    if not args.year:
-        args.year = None
     if not args.path:
         args.path = os.path.join(os.path.dirname(
             __file__), 'BGStatsExport.json')
     if not args.output:
-        args.output = f'wrapped{args.year}.png'
+        if args.year:
+            args.output = f'wrapped{args.year}.png'
 
+        else:
+            args.output = 'wrappedAllTime.png'
+    
     with open(args.path, 'r', encoding='UTF-8') as f:
         data = json.load(f)
 
