@@ -40,7 +40,10 @@ class Player:
         self.id = id_
         self.name = name
         self.plays = collections.defaultdict(int)
+        self.stat_plays = collections.defaultdict(int)
         self.wins = collections.defaultdict(int)
+        self.stat_wins = collections.defaultdict(int)
+        self.start = collections.defaultdict(int)
 
 
 def load_games(data):
@@ -72,7 +75,7 @@ def load_players(data):
             return pickle.load(f)
     count = len(data['players'])
     players = {}
-    for i, player in enumerate(data['players']):
+    for i, player in enumerate(data['players'], start=1):
         players[player['id']] = Player(player['id'], player['name'])
         print(f'Loaded {player["name"]} {i}/{count}')
 
@@ -80,11 +83,25 @@ def load_players(data):
         for player in play['playerScores']:
             year = datetime.strptime(
                 play['playDate'], '%Y-%m-%d %H:%M:%S').year
+
             players[player['playerRefId']].plays[year] += 1
             players[player['playerRefId']].plays[None] += 1
+
+            if not play['ignored']:
+                players[player['playerRefId']].stat_plays[year] += 1
+                players[player['playerRefId']].stat_plays[None] += 1
+
             if player['winner']:
                 players[player['playerRefId']].wins[year] += 1
                 players[player['playerRefId']].wins[None] += 1
+
+                if not play['ignored']:
+                    players[player['playerRefId']].stat_wins[year] += 1
+                    players[player['playerRefId']].stat_wins[None] += 1
+
+            if player['startPlayer']:
+                players[player['playerRefId']].start[year] += 1
+                players[player['playerRefId']].start[None] += 1
 
     with open('pickles/players.pickle', 'wb') as f:
         pickle.dump(players, f)
@@ -182,7 +199,8 @@ def main():
     args = parser.parse_args()
 
     if args.new and os.path.exists('pickles/'):
-        os.removedirs('pickles/')
+        os.remove('pickles/games.pickle')
+        os.remove('pickles/players.pickle')
     if not args.path:
         args.path = os.path.join(os.path.dirname(
             __file__), 'BGStatsExport.json')
