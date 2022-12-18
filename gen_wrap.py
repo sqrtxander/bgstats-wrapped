@@ -198,9 +198,12 @@ def main():
     parser.add_argument('-o', '--output', type=str)
     args = parser.parse_args()
 
-    if args.new and os.path.exists('pickles/'):
-        os.remove('pickles/games.pickle')
-        os.remove('pickles/players.pickle')
+    pickles_path = os.path.join(os.path.dirname(__file__), 'pickles/')
+    if args.new and os.path.exists(pickles_path):
+        for filename in os.listdir(pickles_path):
+            if os.path.isfile(path := os.path.join(pickles_path, filename)):
+                os.remove(path)
+
     if not args.path:
         args.path = os.path.join(os.path.dirname(
             __file__), 'BGStatsExport.json')
@@ -214,8 +217,8 @@ def main():
     with open(args.path, 'r', encoding='UTF-8') as f:
         data = json.load(f)
 
-    if not os.path.exists(os.path.join(os.path.dirname(__file__), 'pickles/')):
-        os.mkdir(os.path.join(os.path.dirname(__file__), 'pickles/'))
+    if not os.path.exists(pickles_path):
+        os.mkdir(pickles_path)
 
     games = load_games(data)
     players = load_players(data)
