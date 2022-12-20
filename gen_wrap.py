@@ -2,7 +2,7 @@ import os
 import json
 import requests
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from io import BytesIO
 import textwrap
 
@@ -13,109 +13,53 @@ from get_data import *
 
 def truncate_name(name, max_length=15):
     if len(name) > max_length:
-        return f'{name[:max_length]}...'
+        return f'{name[:max_length-3]}...'
     return name
 
 
-def generate_image1(games, players, mechanics, year, output_path):
-    background_colour = (20, 20, 20)
-    text_colour = (255, 255, 255)
+def get_text_height(text_string, font):
+    ascent, descent = font.getmetrics()
+    lines = text_string.count('\n') + 1
 
-    games_plays = [game for game in games.values() if game.plays[year]]
-    games_plays.sort(key=lambda game: game.plays[year], reverse=True)
+    return ascent * lines
 
-    players_plays = [player for player in players.values()
-                     if player.plays[year]]
-    players_plays.sort(key=lambda player: player.plays[year], reverse=True)
 
+def mechanics_image(mechanics, year, output_path):
     mechanics_plays = list(mechanics[year])
     mechanics_plays.sort(
         key=lambda mechanic: mechanics[year][mechanic], reverse=True)
 
-    total_plays = sum(game.plays[year] for game in games.values())
+    text_colour = (237, 227, 217)
+    blur_colour = (0, 0, 0)
+    font = ImageFont.truetype('fonts\plump.ttf', 96)
 
-    backdropimage = Image.open('images/backdrop.png')
+    img = Image.open('images/mechanics.png')
+    draw = ImageDraw.Draw(img)
 
-    gameimage = Image.open('images/none_game.png')
-    if games_plays:
-        gameimage_url = games_plays[0].image
-        response = requests.get(gameimage_url)
-        gameimage = Image.open(BytesIO(response.content))
+    positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
+    max_lens = [14, 16, 14, 19, 14]
+    for mechanic, pos, max_len in zip(mechanics_plays[:min(5, len(mechanics_plays))], positions, max_lens):
+        text = textwrap.fill(mechanic, max_len)
+        height = get_text_height(text, font)
+        pos = (pos[0], pos[1] - height)
 
-    gameimage = gameimage.resize((544, 544))
+        for line in text.splitlines():
+            # blurred backdrop
+            blurred = Image.new('RGBA', img.size)
+            draw_b = ImageDraw.Draw(blurred)
+            draw_b.text(pos, line, blur_colour, font, stroke_width=5)
+            blurred = blurred.filter(ImageFilter.BoxBlur(5))
 
-    wrapped = Image.new('RGB', (1080, 1920), background_colour)
-    wrapped.paste(backdropimage, (100, 80), backdropimage)
-    wrapped.paste(gameimage, (268, 264))
+            img.paste(blurred, blurred)
 
-    font = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 36)
-    font_heading = ImageFont.truetype('fonts/Courier Prime.ttf', 36)
-    font_big = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 68)
-    font_year = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 112)
-    draw = ImageDraw.Draw(wrapped)
+            # regular text
+            draw.text(pos, line, text_colour, font)
 
-    draw.text(
-        (20, 20), f'/{"ALL TIME" if year is None else year}',
-        text_colour, font_year)
+            # update pos for next line
+            height = get_text_height(line, font)
+            pos = (pos[0], pos[1] + height)
 
-    draw.text((100, 1000), "Top Players", text_colour, font_heading)
-
-    for i, player in list(enumerate(players_plays))[:min(5, len(players_plays))]:
-        draw.text((100,  1080+i * 45),
-                  f'{i+1} {truncate_name(player.name)}', text_colour, font)
-
-    draw.text((560, 1000), "Top Games", text_colour, font_heading)
-    for i, game in list(enumerate(games_plays))[:min(5, len(games_plays))]:
-        draw.text((560, 1080+i*45),
-                  f'{i+1} {truncate_name(game.name)}', text_colour, font)
-
-    draw.text((100, 1440), "Total Plays", text_colour, font_heading)
-    draw.text((100, 1520), f'{total_plays}', text_colour, font_big)
-
-    if mechanics_plays:
-        draw.text((560, 1440), "Top Mechanic", text_colour, font_heading)
-        draw.text((560, 1520), mechanics_plays[0].replace(
-            " ", "\n"), text_colour, font_big)
-
-    wrapped.save(output_path)
-
-
-def generate_image2(games, year):
-    background_colour = (246, 116, 1896)
-    text_colour = (0, 0, 0)
-
-    games_plays = [game for game in games.values() if game.plays[year]]
-    games_plays.sort(key=lambda game: game.plays[year], reverse=True)
-
-    font_small = ImageFont.truetype('fonts/Courier Prime.ttf', 24)
-    font = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 36)
-    font_heading = ImageFont.truetype('fonts/Courier Prime.ttf', 36)
-    font_big = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 68)
-    font_year = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 112)
-
-    wrapped = Image.new('RGB', (1080, 1920), background_colour)
-    draw = ImageDraw.Draw(wrapped)
-    
-    draw.text(
-        (20, 20), f'/{"ALL TIME" if year is None else year}',
-        text_colour, font_year)
-
-    draw.text((130, 210), 'My Top Games', text_colour, font_big)
-
-    for i, game in list(enumerate(games_plays))[:min(5, len(games_plays))]:
-        draw.text((130, 385 + 105 + 234 * i), f'{i + 1}', text_colour, font_big, anchor='lm')
-        
-        print(game)
-        response = requests.get(game.image)
-        gameimage = Image.open(BytesIO(response.content)).resize((210, 210))
-        time.sleep(0.5)
-        wrapped.paste(gameimage, (226, 384 + 234 * i))
-
-        draw.text((478, 472 + 234 * i), textwrap.fill(game.name, 20), text_colour, font, anchor='ld')
-
-        draw.text((478, 494 + 234 * i), '\n'.join(game.mechanics[:min(3, len(game.mechanics))]), text_colour, font_small)
-    
-    wrapped.save('temp.png')
+    img.save(os.path.join(output_path, 'mechanics.png'))
 
 
 def main():
@@ -137,10 +81,12 @@ def main():
             __file__), 'BGStatsExport.json')
     if not args.output:
         if args.year:
-            args.output = f'wrapped{args.year}.png'
+            args.output = os.path.join(
+                os.path.dirname(__file__), f'wrapped{args.year}')
 
         else:
-            args.output = 'wrappedAllTime.png'
+            args.output = os.path.join(
+                os.path.dirname(__file__), 'wrappedAllTime')
 
     with open(args.path, 'r', encoding='UTF-8') as f:
         data = json.load(f)
@@ -148,12 +94,15 @@ def main():
     if not os.path.exists(pickles_path):
         os.mkdir(pickles_path)
 
+    if not os.path.exists(args.output):
+        os.mkdir(args.output)
+
     games = load_games(data)
     players = load_players(data)
     mechanics = get_mechanics(games, data)
 
-    generate_image1(games, players, mechanics, args.year, args.output)
-    generate_image2(games, args.year)
+    mechanics_image(mechanics, args.year, args.output)
+
 
 if __name__ == '__main__':
     main()
