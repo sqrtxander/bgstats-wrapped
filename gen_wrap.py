@@ -1,123 +1,14 @@
 import os
-
 import json
 import requests
-import xmltodict
-import pickle
 
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-
-import collections
-
-import time
-from datetime import datetime
+import textwrap
 
 import argparse
 
-
-class Game:
-    def __init__(self, bgg_id, name):
-        self.bgg_id = bgg_id
-        self.name = name
-        self.plays = collections.defaultdict(int)
-
-        if bgg_id == 0:
-            self.image = 'images/none_game.png'
-            self.mechanics = []
-            return
-
-        r = requests.get(
-            f'https://boardgamegeek.com/xmlapi2/thing?id={bgg_id}')
-        game_dict = xmltodict.parse(r.text)['items']['item']
-        self.image = game_dict['image']
-        self.mechanics = [link['@value'] for link in game_dict['link']
-                          if link['@type'] == 'boardgamemechanic']
-
-
-class Player:
-    def __init__(self, id_, name):
-        self.id = id_
-        self.name = name
-        self.plays = collections.defaultdict(int)
-        self.stat_plays = collections.defaultdict(int)
-        self.wins = collections.defaultdict(int)
-        self.stat_wins = collections.defaultdict(int)
-        self.start = collections.defaultdict(int)
-
-
-def load_games(data):
-    if os.path.exists('pickles/games.pickle'):
-        with open('pickles/games.pickle', 'rb') as f:
-            return pickle.load(f)
-    count = len(data['games'])
-    games = {}
-    for i, game in enumerate(data['games'], start=1):
-        games[game['id']] = Game(game['bggId'], game['name'])
-        print(f'Loaded {game["name"]} {i}/{count}')
-
-        time.sleep(2)
-
-    for play in data['plays']:
-        year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year
-        games[play['gameRefId']].plays[year] += 1
-        games[play['gameRefId']].plays[None] += 1
-
-    with open('pickles/games.pickle', 'wb') as f:
-        pickle.dump(games, f)
-
-    return games
-
-
-def load_players(data):
-    if os.path.exists('pickles/players.pickle'):
-        with open('pickles/players.pickle', 'rb') as f:
-            return pickle.load(f)
-    count = len(data['players'])
-    players = {}
-    for i, player in enumerate(data['players'], start=1):
-        players[player['id']] = Player(player['id'], player['name'])
-        print(f'Loaded {player["name"]} {i}/{count}')
-
-    for play in data['plays']:
-        for player in play['playerScores']:
-            year = datetime.strptime(
-                play['playDate'], '%Y-%m-%d %H:%M:%S').year
-
-            players[player['playerRefId']].plays[year] += 1
-            players[player['playerRefId']].plays[None] += 1
-
-            if not play['ignored']:
-                players[player['playerRefId']].stat_plays[year] += 1
-                players[player['playerRefId']].stat_plays[None] += 1
-
-            if player['winner']:
-                players[player['playerRefId']].wins[year] += 1
-                players[player['playerRefId']].wins[None] += 1
-
-                if not play['ignored']:
-                    players[player['playerRefId']].stat_wins[year] += 1
-                    players[player['playerRefId']].stat_wins[None] += 1
-
-            if player['startPlayer']:
-                players[player['playerRefId']].start[year] += 1
-                players[player['playerRefId']].start[None] += 1
-
-    with open('pickles/players.pickle', 'wb') as f:
-        pickle.dump(players, f)
-
-    return players
-
-
-def get_mechanics(games, data):
-    mechanics = collections.defaultdict(lambda: collections.defaultdict(int))
-    for play in data['plays']:
-        game = games[play['gameRefId']]
-        year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year
-        for mechanic in game.mechanics:
-            mechanics[year][mechanic] += 1
-            mechanics[None][mechanic] += 1
-    return mechanics
+from get_data import *
 
 
 def truncate_name(name, max_length=15):
@@ -126,7 +17,7 @@ def truncate_name(name, max_length=15):
     return name
 
 
-def generate_image(games, players, mechanics, year, output_path):
+def generate_image1(games, players, mechanics, year, output_path):
     background_colour = (20, 20, 20)
     text_colour = (255, 255, 255)
 
@@ -150,11 +41,10 @@ def generate_image(games, players, mechanics, year, output_path):
         gameimage_url = games_plays[0].image
         response = requests.get(gameimage_url)
         gameimage = Image.open(BytesIO(response.content))
-        gameimage.save('images/gameimage.png')
 
     gameimage = gameimage.resize((544, 544))
 
-    wrapped = Image.new('RGB', (1080, 1920), color=background_colour)
+    wrapped = Image.new('RGB', (1080, 1920), background_colour)
     wrapped.paste(backdropimage, (100, 80), backdropimage)
     wrapped.paste(gameimage, (268, 264))
 
@@ -166,28 +56,66 @@ def generate_image(games, players, mechanics, year, output_path):
 
     draw.text(
         (20, 20), f'/{"ALL TIME" if year is None else year}',
-        text_colour, font=font_year)
+        text_colour, font_year)
 
-    draw.text((100, 1000), "Top Players", text_colour, font=font_heading)
+    draw.text((100, 1000), "Top Players", text_colour, font_heading)
 
     for i, player in list(enumerate(players_plays))[:min(5, len(players_plays))]:
         draw.text((100,  1080+i * 45),
-                  f'{i+1} {truncate_name(player.name)}', text_colour, font=font)
+                  f'{i+1} {truncate_name(player.name)}', text_colour, font)
 
-    draw.text((560, 1000), "Top Games", text_colour, font=font_heading)
+    draw.text((560, 1000), "Top Games", text_colour, font_heading)
     for i, game in list(enumerate(games_plays))[:min(5, len(games_plays))]:
         draw.text((560, 1080+i*45),
-                  f'{i+1} {truncate_name(game.name)}', text_colour, font=font)
+                  f'{i+1} {truncate_name(game.name)}', text_colour, font)
 
-    draw.text((100, 1440), "Total Plays", text_colour, font=font_heading)
-    draw.text((100, 1520), f'{total_plays}', text_colour, font=font_big)
+    draw.text((100, 1440), "Total Plays", text_colour, font_heading)
+    draw.text((100, 1520), f'{total_plays}', text_colour, font_big)
 
     if mechanics_plays:
-        draw.text((560, 1440), "Top Mechanic", text_colour, font=font_heading)
+        draw.text((560, 1440), "Top Mechanic", text_colour, font_heading)
         draw.text((560, 1520), mechanics_plays[0].replace(
-            " ", "\n"), text_colour, font=font_big)
+            " ", "\n"), text_colour, font_big)
 
     wrapped.save(output_path)
+
+
+def generate_image2(games, year):
+    background_colour = (246, 116, 1896)
+    text_colour = (0, 0, 0)
+
+    games_plays = [game for game in games.values() if game.plays[year]]
+    games_plays.sort(key=lambda game: game.plays[year], reverse=True)
+
+    font_small = ImageFont.truetype('fonts/Courier Prime.ttf', 24)
+    font = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 36)
+    font_heading = ImageFont.truetype('fonts/Courier Prime.ttf', 36)
+    font_big = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 68)
+    font_year = ImageFont.truetype('fonts/Courier Prime Bold.ttf', 112)
+
+    wrapped = Image.new('RGB', (1080, 1920), background_colour)
+    draw = ImageDraw.Draw(wrapped)
+    
+    draw.text(
+        (20, 20), f'/{"ALL TIME" if year is None else year}',
+        text_colour, font_year)
+
+    draw.text((130, 210), 'My Top Games', text_colour, font_big)
+
+    for i, game in list(enumerate(games_plays))[:min(5, len(games_plays))]:
+        draw.text((130, 385 + 105 + 234 * i), f'{i + 1}', text_colour, font_big, anchor='lm')
+        
+        print(game)
+        response = requests.get(game.image)
+        gameimage = Image.open(BytesIO(response.content)).resize((210, 210))
+        time.sleep(0.5)
+        wrapped.paste(gameimage, (226, 384 + 234 * i))
+
+        draw.text((478, 472 + 234 * i), textwrap.fill(game.name, 20), text_colour, font, anchor='ld')
+
+        draw.text((478, 494 + 234 * i), '\n'.join(game.mechanics[:min(3, len(game.mechanics))]), text_colour, font_small)
+    
+    wrapped.save('temp.png')
 
 
 def main():
@@ -224,8 +152,8 @@ def main():
     players = load_players(data)
     mechanics = get_mechanics(games, data)
 
-    generate_image(games, players, mechanics, args.year, args.output)
-
+    generate_image1(games, players, mechanics, args.year, args.output)
+    generate_image2(games, args.year)
 
 if __name__ == '__main__':
     main()
