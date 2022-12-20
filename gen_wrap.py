@@ -62,6 +62,42 @@ def mechanics_image(mechanics, year, output_path):
     img.save(os.path.join(output_path, 'mechanics.png'))
 
 
+def games_image(games, year, output_path):
+    games_plays = [game for game in games.values() if game.plays[year]]
+    games_plays.sort(key=lambda game: game.plays[year], reverse=True)   
+
+    text_colour = (251, 194, 0)
+    outline_colour_0 = (0, 0, 0)
+    outline_colour_1 = (255, 255, 255)
+    font = ImageFont.truetype('fonts/SATANICK.TTF', 96)
+
+    img = Image.open('images/games.png')
+    draw = ImageDraw.Draw(img)
+
+    positions = [(356, 500), (1212, 766), (356, 1040), (1212, 1297), (356, 1545)]
+    max_lens = [14, 14, 14, 14, 14]
+    anchors = ['lt', 'rt', 'lt', 'rt', 'lt']
+    for game, pos, max_len, anchor in zip(games_plays[:min(5, len(games_plays))], positions, max_lens, anchors):
+        
+        text = textwrap.fill(game.name, max_len)
+        height = get_text_height(text, font)
+        pos = (pos[0], pos[1] - height)
+
+        for line in text.splitlines():
+            # outline
+            draw.text(pos, line, outline_colour_1, font, anchor=anchor, stroke_width=10)
+            draw.text(pos, line, outline_colour_0, font, anchor=anchor, stroke_width=5)
+
+            # regular text
+            draw.text(pos, line, text_colour, font, anchor=anchor)
+
+            # update pos for next line
+            height = get_text_height(line, font)
+            pos = (pos[0], pos[1] + height)
+            
+    img.save(os.path.join(output_path, 'games.png'))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--new', action='store_true')
@@ -102,7 +138,7 @@ def main():
     mechanics = get_mechanics(games, data)
 
     mechanics_image(mechanics, args.year, args.output)
-
+    games_image(games, args.year, args.output)
 
 if __name__ == '__main__':
     main()
