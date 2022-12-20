@@ -1,5 +1,6 @@
+from __future__ import annotations
 import pickle
-import collections
+from collections import defaultdict
 import requests
 import xmltodict
 import time
@@ -8,10 +9,10 @@ import os
 
 
 class Game:
-    def __init__(self, bgg_id, name):
+    def __init__(self, bgg_id: int, name: str) -> None:
         self.bgg_id = bgg_id
         self.name = name
-        self.plays = collections.defaultdict(int)
+        self.plays = defaultdict(int)
 
         if bgg_id == 0:
             self.image = 'images/none_game.png'
@@ -27,17 +28,17 @@ class Game:
 
 
 class Player:
-    def __init__(self, id_, name):
+    def __init__(self, id_: int, name: str) -> None:
         self.id = id_
         self.name = name
-        self.plays = collections.defaultdict(int)
-        self.stat_plays = collections.defaultdict(int)
-        self.wins = collections.defaultdict(int)
-        self.stat_wins = collections.defaultdict(int)
-        self.start = collections.defaultdict(int)
+        self.plays = defaultdict(int)
+        self.stat_plays = defaultdict(int)
+        self.wins = defaultdict(int)
+        self.stat_wins = defaultdict(int)
+        self.start = defaultdict(int)
 
 
-def load_games(data):
+def load_games(data) -> dict[int|None, Game]:
     if os.path.exists('pickles/games.pickle'):
         with open('pickles/games.pickle', 'rb') as f:
             return pickle.load(f)
@@ -60,7 +61,7 @@ def load_games(data):
     return games
 
 
-def load_players(data):
+def load_players(data) -> dict[int|None, Player]:
     if os.path.exists('pickles/players.pickle'):
         with open('pickles/players.pickle', 'rb') as f:
             return pickle.load(f)
@@ -100,8 +101,8 @@ def load_players(data):
     return players
 
 
-def get_mechanics(games, data):
-    mechanics = collections.defaultdict(lambda: collections.defaultdict(int))
+def get_mechanics(games: dict[int|None, Game] , data) -> defaultdict[int|None, defaultdict[str, int]]:
+    mechanics = defaultdict(lambda: defaultdict(int))
     for play in data['plays']:
         game = games[play['gameRefId']]
         year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year

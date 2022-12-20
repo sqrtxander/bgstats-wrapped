@@ -1,30 +1,31 @@
+from __future__ import annotations
+
 import os
 import json
-import requests
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from io import BytesIO
 import textwrap
 
 import argparse
 
+from collections import defaultdict
+
+
 from get_data import *
 
 
-def truncate_name(name, max_length=15):
-    if len(name) > max_length:
-        return f'{name[:max_length-3]}...'
-    return name
-
-
-def get_text_height(text_string, font):
+def get_text_height(text: str, font: ImageFont.truetype) -> int:
     ascent, descent = font.getmetrics()
-    lines = text_string.count('\n') + 1
+    lines = text.count('\n') + 1
 
     return ascent * lines
 
 
-def mechanics_image(mechanics, year, output_path):
+def mechanics_image(
+        mechanics: defaultdict[int|None, defaultdict[str, int]],
+        year: int|None,
+        output_path: str
+) -> None:
     mechanics_plays = list(mechanics[year])
     mechanics_plays.sort(
         key=lambda mechanic: mechanics[year][mechanic], reverse=True)
@@ -72,7 +73,11 @@ def mechanics_image(mechanics, year, output_path):
     img.save(os.path.join(output_path, 'mechanics.png'))
 
 
-def games_image(games, year, output_path):
+def games_image(
+        games: dict[int|None, Game],
+        year: int|None,
+        output_path: str
+) -> None:
     games_plays = [game for game in games.values() if game.plays[year]]
     games_plays.sort(key=lambda game: game.plays[year], reverse=True)
 
@@ -125,7 +130,11 @@ def games_image(games, year, output_path):
     img.save(os.path.join(output_path, 'games.png'))
 
 
-def players_image(players, year, output_path):
+def players_image(
+        players: dict[int|None, Player],
+        year: int|None,
+        output_path: str
+) -> None:
     players_plays = [player for player in players.values()
                      if player.plays[year]]
     players_plays.sort(key=lambda player: player.plays[year], reverse=True)
@@ -155,7 +164,7 @@ def players_image(players, year, output_path):
     img.save(os.path.join(output_path, 'players.png'))
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--new', action='store_true')
     parser.add_argument('-y', '--year', type=int)
