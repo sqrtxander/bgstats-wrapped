@@ -6,3 +6,6 @@ wrapped*/
 
 # pickled data
 pickles*/
+
+# cpython files
+__pycache__/
