@@ -6,42 +6,44 @@ A data visualisation for [BG Stats](https://www.bgstatsapp.com/) data. Idea by [
 
 install the requirements with
 
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt\
+```
 
 Make sure you have a copy of the json data supplied from bgstats
 
 then run: 
 
-Linux: 
-
-```python3 gen_wrap.py```
-
-Windows:
-
-```python gen_wrap.py```
+```
+python gen_wrap.py
+```
 
 ## Optional arguments
-```-n```
-
-```--new```
+```
+-n
+--new
+```
 
 use this flag if you have recently updated the data file otherwise it will continue to use the old data
 
-```-y <year>```
-
-```-year <year>```
+```
+-y <year>
+-year <year>
+```
 
 the year for the data you want to generate the wrapped from. Leave out for all time.
 
-```-p <path>```
-
-```--path <path>```
+```
+-p <path>
+--path <path>
+```
 
 The path to your bgstats json file, default is ./BGStatsExport.json
 
-```-o <path>```
+```
+-o <path>
+-output <path>
+```
 
-```-output <path>```
-
-the path the wrapped image will be output to, default is ./wrapped\<year\>.png
+the path the wrapped images will be output to, default is ./wrapped\<year\>/
 
