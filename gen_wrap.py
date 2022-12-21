@@ -32,7 +32,7 @@ def mechanics_image(
 
     text_colour = (237, 227, 217)
     blur_colour = (0, 0, 0)
-    font = ImageFont.truetype('fonts\plump.ttf', 96)
+    font = ImageFont.truetype('fonts/plump.ttf', 96)
 
     img = Image.open('images/mechanics.png')
     draw = ImageDraw.Draw(img)
