@@ -22,8 +22,8 @@ def get_text_height(text: str, font: ImageFont.truetype) -> int:
 
 
 def mechanics_image(
-        mechanics: defaultdict[int|None, defaultdict[str, int]],
-        year: int|None,
+        mechanics: defaultdict[int | None, defaultdict[str, int]],
+        year: int | None,
         output_path: str
 ) -> None:
     mechanics_plays = list(mechanics[year])
@@ -35,8 +35,13 @@ def mechanics_image(
     font = ImageFont.truetype('fonts/plump.ttf', 96)
 
     img = Image.open('images/mechanics.png')
-    draw = ImageDraw.Draw(img)
 
+    img_shadow = Image.new('RGBA', img.size)
+    draw_shadow = ImageDraw.Draw(img_shadow)
+
+    img_text = Image.new('RGBA', img.size)
+    draw_text = ImageDraw.Draw(img_text)
+    
     positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
     max_lens = [14, 16, 14, 19, 14]
     for mechanic, pos, max_len in zip(mechanics_plays[:min(5, len(mechanics_plays))], positions, max_lens):
@@ -44,51 +49,52 @@ def mechanics_image(
         lines = text.splitlines()
         height = get_text_height(text, font)
         pos = (pos[0], pos[1] - height)
-        pos_store = pos
-
-        blurred = Image.new('RGBA', img.size)
-        draw_b = ImageDraw.Draw(blurred)
 
         for line in lines:
-            # blurred backdrop
-            draw_b.text(pos, line, blur_colour, font, stroke_width=5)
+            # img_shadow backdrop
+            draw_shadow.text(pos, line, blur_colour, font, stroke_width=5)
 
-            # update pos for next line
-            height = get_text_height(line, font)
-            pos = (pos[0], pos[1] + height)
-
-        # blur outlined text
-        blurred = blurred.filter(ImageFilter.BoxBlur(5))
-        img.paste(blurred, blurred)
-
-        pos = pos_store
-        for line in lines:
             # regular text
-            draw.text(pos, line, text_colour, font)
+            draw_text.text(pos, line, text_colour, font)
 
             # update pos for next line
             height = get_text_height(line, font)
             pos = (pos[0], pos[1] + height)
+
+    # blur outlined text
+    img_shadow = img_shadow.filter(ImageFilter.BoxBlur(5))
+
+    # add shadow and text
+    img.paste(img_shadow, img_shadow)
+    img.paste(img_text, img_text)
 
     img.save(os.path.join(output_path, 'mechanics.png'))
 
 
 def games_image(
-        games: dict[int|None, Game],
-        year: int|None,
+        games: dict[int | None, Game],
+        year: int | None,
         output_path: str
 ) -> None:
     games_plays = [game for game in games.values() if game.plays[year]]
     games_plays.sort(key=lambda game: game.plays[year], reverse=True)
 
     text_colour = (251, 194, 0)
-    outline_colour_0 = (0, 0, 0)
-    outline_colour_1 = (255, 255, 255)
+    outline_colour_0 = (255, 255, 255)
+    outline_colour_1 = (0, 0, 0)
     font = ImageFont.truetype('fonts/SATANICK.TTF', 96)
 
     img = Image.open('images/games.png')
-    draw = ImageDraw.Draw(img)
 
+    img_outline_0 = Image.new('RGBA', img.size)
+    draw_outline_0 = ImageDraw.Draw(img_outline_0)
+
+    img_outline_1 = Image.new('RGBA', img.size)
+    draw_outline_1 = ImageDraw.Draw(img_outline_1)
+
+    img_text = Image.new('RGBA', img.size)
+    draw_text = ImageDraw.Draw(img_text)
+    
     positions = [(356, 500), (1212, 766), (356, 1040),
                  (1212, 1297), (356, 1545)]
     max_lens = [14, 14, 14, 14, 14]
@@ -101,38 +107,32 @@ def games_image(
         pos_store = pos
 
         for line in lines:
-            # outline
-            draw.text(pos, line, outline_colour_1, font,
+            # outline 0
+            draw_outline_0.text(pos, line, outline_colour_0, font,
                       anchor=anchor, stroke_width=10)
 
-            # update pos for next line
-            height = get_text_height(line, font)
-            pos = (pos[0], pos[1] + height)
-
-        pos = pos_store
-        for line in lines:
-            draw.text(pos, line, outline_colour_0, font,
+            # outline 1
+            draw_outline_1.text(pos, line, outline_colour_1, font,
                       anchor=anchor, stroke_width=5)
-
-            # update pos for next line
-            height = get_text_height(line, font)
-            pos = (pos[0], pos[1] + height)
-
-        pos = pos_store
-        for line in lines:
+            
             # regular text
-            draw.text(pos, line, text_colour, font, anchor=anchor)
+            draw_text.text(pos, line, text_colour, font, anchor=anchor)
 
             # update pos for next line
             height = get_text_height(line, font)
             pos = (pos[0], pos[1] + height)
 
+    # add outline and text
+    img.paste(img_outline_0, img_outline_0)
+    img.paste(img_outline_1, img_outline_1)
+    img.paste(img_text, img_text)
+    
     img.save(os.path.join(output_path, 'games.png'))
 
 
 def players_image(
-        players: dict[int|None, Player],
-        year: int|None,
+        players: dict[int | None, Player],
+        year: int | None,
         output_path: str
 ) -> None:
     players_plays = [player for player in players.values()
@@ -143,7 +143,9 @@ def players_image(
     font = ImageFont.truetype('fonts/IBMPlexSans-Thin.ttf', 64)
 
     img = Image.open('images/players.png')
-    draw = ImageDraw.Draw(img)
+
+    img_text = Image.new('RGBA', img.size)
+    draw_text = ImageDraw.Draw(img_text)
 
     positions = [(220, 380), (220, 500), (220, 620),
                  (220, 740), (220, 860)]
@@ -155,11 +157,14 @@ def players_image(
 
         for line in text.splitlines():
             # regular text
-            draw.text(pos, line, text_colour, font, anchor='lt')
+            draw_text.text(pos, line, text_colour, font, anchor='lt')
 
             # update pos for next line
             height = get_text_height(line, font)
             pos = (pos[0], pos[1] + height)
+
+    # add text
+    img.paste(img_text, img_text)
 
     img.save(os.path.join(output_path, 'players.png'))
 
@@ -181,6 +186,7 @@ def main() -> None:
     if not args.path:
         args.path = os.path.join(os.path.dirname(
             __file__), 'BGStatsExport.json')
+
     if not args.output:
         if args.year:
             args.output = os.path.join(
@@ -190,14 +196,14 @@ def main() -> None:
             args.output = os.path.join(
                 os.path.dirname(__file__), 'wrappedAllTime')
 
-    with open(args.path, 'r', encoding='UTF-8') as f:
-        data = json.load(f)
-
     if not os.path.exists(pickles_path):
         os.mkdir(pickles_path)
 
     if not os.path.exists(args.output):
         os.mkdir(args.output)
+
+    with open(args.path, 'r', encoding='UTF-8') as f:
+        data = json.load(f)
 
     games = load_games(data)
     players = load_players(data)
