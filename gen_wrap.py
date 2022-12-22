@@ -32,63 +32,34 @@ def title_image(year: int | None, output_path: str) -> None:
 
     draw.text((20, 20), text, text_colour, font)
 
-    img.save(os.path.join(output_path, 'title.png'))
+    img.save(os.path.join(output_path, '00title.png'))
 
 
-def mechanics_image(
-        mechanics: defaultdict[int | None, defaultdict[str, int]],
-        year: int | None,
-        output_path: str
+def plays_image(
+    games: dict[int | None, Game],
+    year: int | None,
+    output_path: str
 ) -> None:
-    mechanics_plays = list(mechanics[year])
-    mechanics_plays.sort(
-        key=lambda mechanic: mechanics[year][mechanic], reverse=True)
+    games_plays = [game for game in games.values() if game.plays[year]]
+    total_plays = f'{sum(game.plays[year] for game in games_plays)}'
+    unique_games = f'{len(games_plays)}'
 
-    text_colour = (237, 227, 217)
-    blur_colour = (0, 0, 0)
-    font = ImageFont.truetype('fonts/plump.ttf', 96)
+    text_colour = (0, 0, 0)
+    font = ImageFont.truetype('fonts/verdanab.ttf', 72)
+    
+    img = Image.open('images/plays.png')
+    draw = ImageDraw.Draw(img)
 
-    img = Image.open('images/mechanics.png')
+    draw.text((1584, 877), total_plays, text_colour, font, anchor='mm')
+    draw.text((1584, 1557), unique_games, text_colour, font, anchor='mm')
 
-    img_shadow = Image.new('RGBA', img.size)
-    draw_shadow = ImageDraw.Draw(img_shadow)
-
-    img_text = Image.new('RGBA', img.size)
-    draw_text = ImageDraw.Draw(img_text)
-
-    positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
-    max_lens = [14, 16, 14, 19, 14]
-    for mechanic, pos, max_len in zip(mechanics_plays[:min(5, len(mechanics_plays))], positions, max_lens):
-        text = textwrap.fill(mechanic, max_len)
-        lines = text.splitlines()
-        height = get_text_height(text, font)
-        pos = (pos[0], pos[1] - height)
-
-        for line in lines:
-            # img_shadow backdrop
-            draw_shadow.text(pos, line, blur_colour, font, stroke_width=5)
-
-            # regular text
-            draw_text.text(pos, line, text_colour, font)
-
-            # update pos for next line
-            height = get_text_height(line, font)
-            pos = (pos[0], pos[1] + height)
-
-    # blur outlined text
-    img_shadow = img_shadow.filter(ImageFilter.BoxBlur(5))
-
-    # add shadow and text
-    img.paste(img_shadow, img_shadow)
-    img.paste(img_text, img_text)
-
-    img.save(os.path.join(output_path, 'mechanics.png'))
-
+    img.save(os.path.join(output_path, '01plays.png'))
+    
 
 def games_image(
-        games: dict[int | None, Game],
-        year: int | None,
-        output_path: str
+    games: dict[int | None, Game],
+    year: int | None,
+    output_path: str
 ) -> None:
     games_plays = [game for game in games.values() if game.plays[year]]
     games_plays.sort(key=lambda game: game.plays[year], reverse=True)
@@ -141,13 +112,13 @@ def games_image(
     img.paste(img_outline_1, img_outline_1)
     img.paste(img_text, img_text)
 
-    img.save(os.path.join(output_path, 'games.png'))
+    img.save(os.path.join(output_path, '02games.png'))
 
 
 def players_image(
-        players: dict[int | None, Player],
-        year: int | None,
-        output_path: str
+    players: dict[int | None, Player],
+    year: int | None,
+    output_path: str
 ) -> None:
     players_plays = [player for player in players.values()
                      if player.plays[year]]
@@ -180,7 +151,58 @@ def players_image(
     # add text
     img.paste(img_text, img_text)
 
-    img.save(os.path.join(output_path, 'players.png'))
+    img.save(os.path.join(output_path, '03players.png'))
+
+
+
+def mechanics_image(
+    mechanics: defaultdict[int | None, defaultdict[str, int]],
+    year: int | None,
+    output_path: str
+) -> None:
+    mechanics_plays = list(mechanics[year])
+    mechanics_plays.sort(
+        key=lambda mechanic: mechanics[year][mechanic], reverse=True)
+
+    text_colour = (237, 227, 217)
+    blur_colour = (0, 0, 0)
+    font = ImageFont.truetype('fonts/plump.ttf', 96)
+
+    img = Image.open('images/mechanics.png')
+
+    img_shadow = Image.new('RGBA', img.size)
+    draw_shadow = ImageDraw.Draw(img_shadow)
+
+    img_text = Image.new('RGBA', img.size)
+    draw_text = ImageDraw.Draw(img_text)
+
+    positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
+    max_lens = [14, 16, 14, 19, 14]
+    for mechanic, pos, max_len in zip(mechanics_plays[:min(5, len(mechanics_plays))], positions, max_lens):
+        text = textwrap.fill(mechanic, max_len)
+        lines = text.splitlines()
+        height = get_text_height(text, font)
+        pos = (pos[0], pos[1] - height)
+
+        for line in lines:
+            # img_shadow backdrop
+            draw_shadow.text(pos, line, blur_colour, font, stroke_width=5)
+
+            # regular text
+            draw_text.text(pos, line, text_colour, font)
+
+            # update pos for next line
+            height = get_text_height(line, font)
+            pos = (pos[0], pos[1] + height)
+
+    # blur outlined text
+    img_shadow = img_shadow.filter(ImageFilter.BoxBlur(5))
+
+    # add shadow and text
+    img.paste(img_shadow, img_shadow)
+    img.paste(img_text, img_text)
+
+    img.save(os.path.join(output_path, '04mechanics.png'))
 
 
 def main() -> None:
@@ -224,9 +246,10 @@ def main() -> None:
     mechanics = get_mechanics(games, data)
 
     title_image(args.year, args.output)
-    mechanics_image(mechanics, args.year, args.output)
+    plays_image(games, args.year, args.output)
     games_image(games, args.year, args.output)
     players_image(players, args.year, args.output)
+    mechanics_image(mechanics, args.year, args.output)
 
 
 if __name__ == '__main__':
