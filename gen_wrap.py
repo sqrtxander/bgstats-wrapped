@@ -21,6 +21,20 @@ def get_text_height(text: str, font: ImageFont.truetype) -> int:
     return ascent * lines
 
 
+def title_image(year: int | None, output_path: str) -> None:
+    img = Image.open('images/title.png')
+    draw = ImageDraw.Draw(img)
+
+    font = ImageFont.truetype('fonts/Louis George Cafe Light.ttf', 108)
+    text_colour = (0, 0, 0)
+
+    text = f'/{"All Time" if year is None else year}'
+
+    draw.text((20, 20), text, text_colour, font)
+
+    img.save(os.path.join(output_path, 'title.png'))
+
+
 def mechanics_image(
         mechanics: defaultdict[int | None, defaultdict[str, int]],
         year: int | None,
@@ -41,7 +55,7 @@ def mechanics_image(
 
     img_text = Image.new('RGBA', img.size)
     draw_text = ImageDraw.Draw(img_text)
-    
+
     positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
     max_lens = [14, 16, 14, 19, 14]
     for mechanic, pos, max_len in zip(mechanics_plays[:min(5, len(mechanics_plays))], positions, max_lens):
@@ -94,7 +108,7 @@ def games_image(
 
     img_text = Image.new('RGBA', img.size)
     draw_text = ImageDraw.Draw(img_text)
-    
+
     positions = [(356, 500), (1212, 766), (356, 1040),
                  (1212, 1297), (356, 1545)]
     max_lens = [14, 14, 14, 14, 14]
@@ -109,12 +123,12 @@ def games_image(
         for line in lines:
             # outline 0
             draw_outline_0.text(pos, line, outline_colour_0, font,
-                      anchor=anchor, stroke_width=10)
+                                anchor=anchor, stroke_width=10)
 
             # outline 1
             draw_outline_1.text(pos, line, outline_colour_1, font,
-                      anchor=anchor, stroke_width=5)
-            
+                                anchor=anchor, stroke_width=5)
+
             # regular text
             draw_text.text(pos, line, text_colour, font, anchor=anchor)
 
@@ -126,7 +140,7 @@ def games_image(
     img.paste(img_outline_0, img_outline_0)
     img.paste(img_outline_1, img_outline_1)
     img.paste(img_text, img_text)
-    
+
     img.save(os.path.join(output_path, 'games.png'))
 
 
@@ -209,6 +223,7 @@ def main() -> None:
     players = load_players(data)
     mechanics = get_mechanics(games, data)
 
+    title_image(args.year, args.output)
     mechanics_image(mechanics, args.year, args.output)
     games_image(games, args.year, args.output)
     players_image(players, args.year, args.output)
