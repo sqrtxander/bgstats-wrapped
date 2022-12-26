@@ -67,17 +67,13 @@ def games_image(
     top_games.sort(key=lambda game: game.plays[year], reverse=True)
     top_games = top_games[:min(5, len(top_games))]
 
-    text_colour = (251, 194, 0)
-    outline_colour_0 = (255, 255, 255)
-    outline_colour_1 = (0, 0, 0)
+    text_colour = (255, 255, 255)
+    outline_colour = (0, 0, 0)
     font = ImageFont.truetype('fonts/SATANICK.TTF', 84)
     img = Image.open('images/games.png')
 
-    img_outline_0 = Image.new('RGBA', img.size)
-    draw_outline_0 = ImageDraw.Draw(img_outline_0)
-
-    img_outline_1 = Image.new('RGBA', img.size)
-    draw_outline_1 = ImageDraw.Draw(img_outline_1)
+    img_outline = Image.new('RGBA', img.size)
+    draw_outline = ImageDraw.Draw(img_outline)
 
     img_text = Image.new('RGBA', img.size)
     draw_text = ImageDraw.Draw(img_text)
@@ -99,12 +95,8 @@ def games_image(
         pos = (pos[0], pos[1] - height)
 
         for line in lines:
-            # outline 0
-            draw_outline_0.text(pos, line, outline_colour_0, font,
-                                anchor=anchor, stroke_width=10)
-
-            # outline 1
-            draw_outline_1.text(pos, line, outline_colour_1, font,
+            # outline
+            draw_outline.text(pos, line, outline_colour, font,
                                 anchor=anchor, stroke_width=5)
 
             # regular text
@@ -115,16 +107,13 @@ def games_image(
             pos = (pos[0], pos[1] + height)
 
         # add bar chart
-        draw_outline_0.rectangle(
-            (15, pos[1]+10, 15 + game.plays[year] * scale, pos[1] + 50), outline_colour_0)
-        draw_outline_1.rectangle(
-            (20, pos[1]+15, 10 + game.plays[year] * scale, pos[1] + 45), outline_colour_1)
+        draw_outline.rectangle(
+            (20, pos[1]+15, 10 + game.plays[year] * scale, pos[1] + 45), outline_colour)
         draw_text.rectangle(
             (25, pos[1]+20, 5 + game.plays[year] * scale, pos[1] + 40), text_colour)
 
     # add outline and text
-    img.paste(img_outline_0, img_outline_0)
-    img.paste(img_outline_1, img_outline_1)
+    img.paste(img_outline, img_outline)
     img.paste(img_text, img_text)
 
     img.save(os.path.join(output_path, '02games.png'))
