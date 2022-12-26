@@ -38,7 +38,7 @@ class Player:
         self.start = defaultdict(int)
 
 
-def load_games(data) -> dict[int|None, Game]:
+def load_games(data) -> dict[int | None, Game]:
     if os.path.exists('pickles/games.pickle'):
         with open('pickles/games.pickle', 'rb') as f:
             return pickle.load(f)
@@ -61,7 +61,7 @@ def load_games(data) -> dict[int|None, Game]:
     return games
 
 
-def load_players(data) -> dict[int|None, Player]:
+def load_players(data) -> dict[int | None, Player]:
     if os.path.exists('pickles/players.pickle'):
         with open('pickles/players.pickle', 'rb') as f:
             return pickle.load(f)
@@ -79,21 +79,21 @@ def load_players(data) -> dict[int|None, Player]:
             players[player['playerRefId']].plays[year] += 1
             players[player['playerRefId']].plays[None] += 1
 
-            if not play['ignored']:
-                players[player['playerRefId']].stat_plays[year] += 1
-                players[player['playerRefId']].stat_plays[None] += 1
+            players[player['playerRefId']
+                    ].stat_plays[year] += not play['ignored']
+            players[player['playerRefId']
+                    ].stat_plays[None] += not play['ignored']
 
-            if player['winner']:
-                players[player['playerRefId']].wins[year] += 1
-                players[player['playerRefId']].wins[None] += 1
+            players[player['playerRefId']].wins[year] += player['winner']
+            players[player['playerRefId']].wins[None] += player['winner']
 
-                if not play['ignored']:
-                    players[player['playerRefId']].stat_wins[year] += 1
-                    players[player['playerRefId']].stat_wins[None] += 1
+            players[player['playerRefId']
+                    ].stat_wins[year] += player['winner'] and not play['ignored']
+            players[player['playerRefId']
+                    ].stat_wins[None] += player['winner'] and not play['ignored']
 
-            if player['startPlayer']:
-                players[player['playerRefId']].start[year] += 1
-                players[player['playerRefId']].start[None] += 1
+            players[player['playerRefId']].start[year] += player['startPlayer']
+            players[player['playerRefId']].start[None] += player['startPlayer']
 
     with open('pickles/players.pickle', 'wb') as f:
         pickle.dump(players, f)
@@ -101,7 +101,7 @@ def load_players(data) -> dict[int|None, Player]:
     return players
 
 
-def get_mechanics(games: dict[int|None, Game] , data) -> defaultdict[int|None, defaultdict[str, int]]:
+def get_mechanics(games: dict[int | None, Game], data) -> defaultdict[int | None, defaultdict[str, int]]:
     mechanics = defaultdict(lambda: defaultdict(int))
     for play in data['plays']:
         game = games[play['gameRefId']]

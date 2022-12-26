@@ -82,6 +82,10 @@ def games_image(
     img_text = Image.new('RGBA', img.size)
     draw_text = ImageDraw.Draw(img_text)
 
+    if not top_games:
+        img.save(os.path.join(output_path, '02games.png'))
+        return
+
     positions = [(356, 482), (1212, 732), (356, 982),
                  (1212, 1233), (356, 1483)]
     max_lens = [14, 14, 14, 14, 14]
@@ -144,6 +148,10 @@ def players_image(
     img_text = Image.new('RGBA', img.size)
     draw_text = ImageDraw.Draw(img_text)
 
+    if not top_players:
+        img.save(os.path.join(output_path, '03players.png'))
+        return
+
     positions = [(220, 360), (220, 480), (220, 600),
                  (220, 720), (220, 840)]
     max_lens = [15, 15, 15, 15, 15]
@@ -194,6 +202,10 @@ def mechanics_image(
 
     img_text = Image.new('RGBA', img.size)
     draw_text = ImageDraw.Draw(img_text)
+
+    if not top_mechanics:
+        img.save(os.path.join(output_path, '04mechanics.png'))
+        return
 
     positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
     bar_y_positions = [193, 339-30, 640, 1137, 1278-30]
