@@ -208,11 +208,10 @@ def mechanics_image(
         return
 
     positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
-    bar_y_positions = [193, 339-30, 640, 1137, 1278-30]
     max_lens = [14, 16, 14, 19, 14]
     scale = (img.width - 72) / mechanics[year][top_mechanics[0]]
 
-    for mechanic, pos, bary, max_len in zip(top_mechanics, positions, bar_y_positions, max_lens):
+    for mechanic, pos, max_len in zip(top_mechanics, positions, max_lens):
         text = textwrap.fill(mechanic, max_len)
         lines = text.splitlines()
         height = get_text_height(text, font)
@@ -231,9 +230,9 @@ def mechanics_image(
 
         # add bars
         draw_shadow.rectangle(
-            (31, bary, 21 + mechanics[year][mechanic] * scale, bary + 30), shadow_colour)
+            (31, pos[1] + 5, 21 + mechanics[year][mechanic] * scale, pos[1] + 35), shadow_colour)
         draw_text.rectangle(
-            (36, bary + 5, 16 + mechanics[year][mechanic] * scale, bary + 25), text_colour)
+            (36, pos[1] + 10, 16 + mechanics[year][mechanic] * scale, pos[1] + 30), text_colour)
 
     # blur outlined text
     img_shadow = img_shadow.filter(ImageFilter.BoxBlur(5))
