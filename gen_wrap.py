@@ -70,6 +70,7 @@ def games_image(
     text_colour = (255, 255, 255)
     outline_colour = (0, 0, 0)
     font = ImageFont.truetype('fonts/SATANICK.TTF', 84)
+    font_numbers = ImageFont.truetype('fonts/SATANICK.TTF', 96)
     img = Image.open('images/games.png')
 
     img_outline = Image.new('RGBA', img.size)
@@ -86,7 +87,7 @@ def games_image(
                  (1212, 1233), (356, 1483)]
     max_lens = [14, 14, 14, 14, 14]
     anchors = ['lt', 'rt', 'lt', 'rt', 'lt']
-    scale = (img.width - 30) / top_games[0].plays[year]
+    bar_scale = (img.width - 165) / top_games[0].plays[year]
 
     for game, pos, max_len, anchor in zip(top_games, positions, max_lens, anchors):
         text = textwrap.fill(game.name, max_len)
@@ -97,7 +98,7 @@ def games_image(
         for line in lines:
             # outline
             draw_outline.text(pos, line, outline_colour, font,
-                                anchor=anchor, stroke_width=5)
+                              anchor=anchor, stroke_width=5)
 
             # regular text
             draw_text.text(pos, line, text_colour, font, anchor=anchor)
@@ -108,9 +109,15 @@ def games_image(
 
         # add bar chart
         draw_outline.rectangle(
-            (20, pos[1]+15, 10 + game.plays[year] * scale, pos[1] + 45), outline_colour)
+            (20, pos[1]+15, 10 + game.plays[year] * bar_scale, pos[1] + 45), outline_colour)
         draw_text.rectangle(
-            (25, pos[1]+20, 5 + game.plays[year] * scale, pos[1] + 40), text_colour)
+            (25, pos[1]+20, 5 + game.plays[year] * bar_scale, pos[1] + 40), text_colour)
+
+        # add bar chart numbers
+        draw_outline.text((25 + game.plays[year] * bar_scale, pos[1] + 30),
+                          f'{game.plays[year]}', outline_colour, font_numbers, anchor='lm', stroke_width=5)
+        draw_text.text((25 + game.plays[year] * bar_scale, pos[1] + 30),
+                       f'{game.plays[year]}', text_colour, font_numbers, anchor='lm')
 
     # add outline and text
     img.paste(img_outline, img_outline)
@@ -131,7 +138,7 @@ def players_image(
 
     text_colour = (0, 0, 0)
     font = ImageFont.truetype('fonts/IBMPlexSans-Thin.ttf', 64)
-
+    font_numbers = ImageFont.truetype('fonts/IBMPlexSans-Thin.ttf', 48)
     img = Image.open('images/players.png')
 
     img_text = Image.new('RGBA', img.size)
@@ -144,7 +151,7 @@ def players_image(
     positions = [(220, 360), (220, 480), (220, 600),
                  (220, 720), (220, 840)]
     max_lens = [15, 15, 15, 15, 15]
-    scale = (img.width - 440) / top_players[0].plays[year]
+    bar_scale = (img.width - 490) / top_players[0].plays[year]
 
     for player, pos, max_len in zip(top_players, positions, max_lens):
         text = textwrap.fill(player.name.upper(), max_len)
@@ -159,11 +166,15 @@ def players_image(
             height = get_text_height(line, font)
             pos = (pos[0], pos[1] + height)
 
-        # add bars
+        # add bar chart
         draw_text.rectangle(
-            (220, pos[1] - 5, 220 + player.plays[year] * scale, pos[1] + 15), text_colour)
+            (220, pos[1] - 10, 220 + player.plays[year] * bar_scale, pos[1] + 10), text_colour)
         draw_text.rectangle(
-            (222, pos[1] - 3, 218 + player.plays[year] * scale, pos[1] + 13), (0, 0, 0, 0))
+            (222, pos[1] - 8, 218 + player.plays[year] * bar_scale, pos[1] + 8), (0, 0, 0, 0))
+
+        # add bar chart numbers
+        draw_text.text((235 + player.plays[year] * bar_scale, pos[1]),
+                       f'{player.plays[year]}', text_colour, font_numbers, anchor='lm')
 
     # add text
     img.paste(img_text, img_text)
@@ -183,7 +194,7 @@ def mechanics_image(
     text_colour = (237, 227, 217)
     shadow_colour = (0, 0, 0)
     font = ImageFont.truetype('fonts/plump.ttf', 96)
-
+    font_numbers = ImageFont.truetype('fonts/plump.ttf', 48)
     img = Image.open('images/mechanics.png')
 
     img_shadow = Image.new('RGBA', img.size)
@@ -198,7 +209,7 @@ def mechanics_image(
 
     positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
     max_lens = [14, 16, 14, 19, 14]
-    scale = (img.width - 72) / mechanics[year][top_mechanics[0]]
+    bar_scale = (img.width - 142) / mechanics[year][top_mechanics[0]]
 
     for mechanic, pos, max_len in zip(top_mechanics, positions, max_lens):
         text = textwrap.fill(mechanic, max_len)
@@ -217,11 +228,17 @@ def mechanics_image(
             height = get_text_height(line, font)
             pos = (pos[0], pos[1] + height)
 
-        # add bars
+        # add bar chart
         draw_shadow.rectangle(
-            (31, pos[1] + 5, 21 + mechanics[year][mechanic] * scale, pos[1] + 35), shadow_colour)
+            (31, pos[1] + 5, 21 + mechanics[year][mechanic] * bar_scale, pos[1] + 35), shadow_colour)
         draw_text.rectangle(
-            (36, pos[1] + 10, 16 + mechanics[year][mechanic] * scale, pos[1] + 30), text_colour)
+            (36, pos[1] + 10, 16 + mechanics[year][mechanic] * bar_scale, pos[1] + 30), text_colour)
+
+        # add bar chart numbers
+        draw_shadow.text((36 + mechanics[year][mechanic] * bar_scale, pos[1] + 20),
+                         f'{mechanics[year][mechanic]}', shadow_colour, font_numbers, anchor='lm', stroke_width=5)
+        draw_text.text((36 + mechanics[year][mechanic] * bar_scale, pos[1] + 20),
+                       f'{mechanics[year][mechanic]}', text_colour, font_numbers, anchor='lm')
 
     # blur outlined text
     img_shadow = img_shadow.filter(ImageFilter.BoxBlur(5))
