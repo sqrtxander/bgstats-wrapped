@@ -106,9 +106,9 @@ def games_image(
 
         # add bar chart
         draw_outline.rectangle(
-            (20, pos[1]+15, 10 + game.plays[year] * bar_scale, pos[1] + 45), outline_colour)
+            (20, pos[1]+15, 20 + game.plays[year] * bar_scale, pos[1] + 45), outline_colour)
         draw_text.rectangle(
-            (25, pos[1]+20, 5 + game.plays[year] * bar_scale, pos[1] + 40), text_colour)
+            (25, pos[1]+20, 15+ game.plays[year] * bar_scale, pos[1] + 40), text_colour)
 
         # add bar chart numbers
         draw_outline.text((25 + game.plays[year] * bar_scale, pos[1] + 30),
@@ -220,7 +220,7 @@ def categories_image(
 
         # add bar chart
         draw_text.rectangle(
-            (152, pos[1] + 30, 152 + categories[year][mechanic] * bar_scale, pos[1] + 50), text_colour)
+            (152, pos[1] + 10, 152 + categories[year][mechanic] * bar_scale, pos[1] + 50), text_colour)
 
         # add bar chart numbers
         draw_text.text((152 + categories[year][mechanic] * bar_scale, pos[1] + 40),
@@ -280,9 +280,9 @@ def mechanics_image(
 
         # add bar chart
         draw_shadow.rectangle(
-            (31, pos[1] + 5, 21 + mechanics[year][mechanic] * bar_scale, pos[1] + 35), shadow_colour)
+            (31, pos[1] + 5, 31 + mechanics[year][mechanic] * bar_scale, pos[1] + 35), shadow_colour)
         draw_text.rectangle(
-            (36, pos[1] + 10, 16 + mechanics[year][mechanic] * bar_scale, pos[1] + 30), text_colour)
+            (36, pos[1] + 10, 26 + mechanics[year][mechanic] * bar_scale, pos[1] + 30), text_colour)
 
         # add bar chart numbers
         draw_shadow.text((36 + mechanics[year][mechanic] * bar_scale, pos[1] + 20),
