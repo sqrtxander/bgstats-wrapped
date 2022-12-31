@@ -26,6 +26,9 @@ class Game:
         self.mechanics = [link['@value'] for link in game_dict['link']
                           if link['@type'] == 'boardgamemechanic']
 
+        self.categories = [link['@value'] for link in game_dict['link']
+                           if link['@type'] == 'boardgamecategory']
+
 
 class Player:
     def __init__(self, id_: int, name: str) -> None:
@@ -110,3 +113,14 @@ def get_mechanics(games: dict[int | None, Game], data) -> defaultdict[int | None
             mechanics[year][mechanic] += 1
             mechanics[None][mechanic] += 1
     return mechanics
+
+
+def get_categories(games: dict[int | None, Game], data) -> defaultdict[int | None, defaultdict[str, int]]:
+    categories = defaultdict(lambda: defaultdict(int))
+    for play in data['plays']:
+        game = games[play['gameRefId']]
+        year = datetime.strptime(play['playDate'], '%Y-%m-%d %H:%M:%S').year
+        for category in game.categories:
+            categories[year][category] += 1
+            categories[None][category] += 1
+    return categories

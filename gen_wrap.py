@@ -179,6 +179,59 @@ def players_image(
     img.save(os.path.join(output_path, '03players.png'))
 
 
+def categories_image(
+    categories: defaultdict[int | None, defaultdict[str, int]],
+    year: int | None,
+    output_path: str
+) -> None:
+    top_categories = list(categories[year])
+    top_categories.sort(
+        key=lambda mechanic: categories[year][mechanic], reverse=True)
+    top_categories = top_categories[:min(5, len(top_categories))]
+    text_colour = (0, 0, 0)
+    font = ImageFont.truetype('fonts/bahnschrift.ttf', 96)
+    font_numbers = ImageFont.truetype('fonts/bahnschrift.ttf', 72)
+    img = Image.open('images/categories.png')
+
+    img_text = Image.new('RGBA', img.size)
+    draw_text = ImageDraw.Draw(img_text)
+
+    if not top_categories:
+        img.save(os.path.join(output_path, '04categories.png'))
+        return
+
+    positions = [(150, 588), (150, 805), (150, 1024), (150, 1239), (150, 1453)]
+    max_lens = [20, 20, 20, 20, 20]
+    bar_scale = (img.width - 283) / categories[year][top_categories[0]]
+
+    for mechanic, pos, max_len in zip(top_categories, positions, max_lens):
+        text = textwrap.fill(mechanic, max_len)
+        lines = text.splitlines()
+        height = get_text_height(text, font)
+        pos = (pos[0], pos[1] - height)
+
+        for line in lines:
+            # regular text
+            draw_text.text(pos, line, text_colour, font)
+
+            # update pos for next line
+            height = get_text_height(line, font)
+            pos = (pos[0], pos[1] + height)
+
+        # add bar chart
+        draw_text.rectangle(
+            (152, pos[1] + 30, 152 + categories[year][mechanic] * bar_scale, pos[1] + 50), text_colour)
+
+        # add bar chart numbers
+        draw_text.text((152 + categories[year][mechanic] * bar_scale, pos[1] + 40),
+                       f'{categories[year][mechanic]}', text_colour, font_numbers, anchor='lm')
+
+    # add shadow and text
+    img.paste(img_text, img_text)
+
+    img.save(os.path.join(output_path, '04categories.png'))
+
+
 def mechanics_image(
     mechanics: defaultdict[int | None, defaultdict[str, int]],
     year: int | None,
@@ -201,7 +254,7 @@ def mechanics_image(
     draw_text = ImageDraw.Draw(img_text)
 
     if not top_mechanics:
-        img.save(os.path.join(output_path, '04mechanics.png'))
+        img.save(os.path.join(output_path, '05mechanics.png'))
         return
 
     positions = [(656, 174), (500, 491), (656, 803), (347, 1118), (656, 1428)]
@@ -244,7 +297,7 @@ def mechanics_image(
     img.paste(img_shadow, img_shadow)
     img.paste(img_text, img_text)
 
-    img.save(os.path.join(output_path, '04mechanics.png'))
+    img.save(os.path.join(output_path, '05mechanics.png'))
 
 
 def main() -> None:
@@ -285,12 +338,14 @@ def main() -> None:
 
     games = load_games(data)
     players = load_players(data)
+    categories = get_categories(games, data)
     mechanics = get_mechanics(games, data)
 
     title_image(args.year, args.output)
     plays_image(games, args.year, args.output)
     games_image(games, args.year, args.output)
     players_image(players, args.year, args.output)
+    categories_image(categories, args.year, args.output)
     mechanics_image(mechanics, args.year, args.output)
 
 
