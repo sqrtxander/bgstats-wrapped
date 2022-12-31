@@ -220,7 +220,7 @@ def categories_image(
 
         # add bar chart
         draw_text.rectangle(
-            (152, pos[1] + 10, 152 + categories[year][mechanic] * bar_scale, pos[1] + 50), text_colour)
+            (152, pos[1] + 30, 152 + categories[year][mechanic] * bar_scale, pos[1] + 50), text_colour)
 
         # add bar chart numbers
         draw_text.text((152 + categories[year][mechanic] * bar_scale, pos[1] + 40),
